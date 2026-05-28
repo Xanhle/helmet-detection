@@ -1,0 +1,590 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    .home-hero {
+        display: grid;
+        grid-template-columns: 1fr 280px;
+        gap: 24px;
+        align-items: stretch;
+        margin-bottom: 30px;
+    }
+
+    .home-hero-content {
+        background: linear-gradient(135deg, #2563eb, #0ea5e9);
+        color: #ffffff;
+        border-radius: 26px;
+        padding: 44px 46px;
+        box-shadow: 0 22px 55px rgba(37, 99, 235, 0.22);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .home-hero-content::after {
+        content: "";
+        position: absolute;
+        right: -70px;
+        bottom: -90px;
+        width: 260px;
+        height: 260px;
+        background: rgba(255, 255, 255, 0.13);
+        border-radius: 50%;
+    }
+
+    .hero-label {
+        display: inline-flex;
+        align-items: center;
+        min-height: 34px;
+        padding: 0 14px;
+        border-radius: 999px;
+        background: rgba(255, 255, 255, 0.18);
+        color: #ffffff;
+        font-weight: 800;
+        margin: 0 0 18px;
+        letter-spacing: 0.3px;
+    }
+
+    .home-hero-content h1 {
+        color: #ffffff;
+        margin: 0 0 16px;
+        max-width: 780px;
+        font-size: 38px;
+        line-height: 1.24;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+    }
+
+    .home-hero-content p {
+        color: #eaf6ff;
+        max-width: 760px;
+        margin: 0;
+        font-size: 17px;
+        line-height: 1.8;
+        font-weight: 500;
+    }
+
+    .hero-model-box {
+        border-radius: 26px;
+        padding: 32px 28px;
+        background: #ffffff;
+        border: 1px solid #e5eaf3;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        text-align: center;
+    }
+
+    .hero-model-box span {
+        color: #64748b;
+        font-weight: 700;
+        margin-bottom: 10px;
+    }
+
+    .hero-model-box strong {
+        color: #2563eb;
+        font-size: 40px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin-bottom: 10px;
+    }
+
+    .hero-model-box p {
+        margin: 0;
+        color: #0f172a;
+        font-weight: 800;
+    }
+
+    .intro-card h2,
+    .dashboard-card h2,
+    .recent-card h2 {
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 12px;
+    }
+
+    .intro-card p,
+    .section-title-row p {
+        color: #64748b;
+        font-weight: 500;
+        line-height: 1.75;
+    }
+
+    .section-title-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 22px;
+    }
+
+    .section-title-row h2 {
+        margin: 0 0 8px;
+    }
+
+    .section-title-row p {
+        margin: 0;
+    }
+
+    .dashboard-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 18px;
+    }
+
+    .stat-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 22px;
+        padding: 22px;
+        transition: 0.2s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 16px 35px rgba(15, 23, 42, 0.08);
+    }
+
+    .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 16px;
+        background: #eef2ff;
+        color: #2563eb;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        margin-bottom: 16px;
+    }
+
+    .stat-title {
+        color: #334155;
+        font-weight: 800;
+        margin-bottom: 10px;
+        min-height: 42px;
+        display: flex;
+        align-items: center;
+    }
+
+    .stat-number {
+        color: #2563eb;
+        font-size: 34px;
+        font-weight: 800;
+        line-height: 1.1;
+        margin-bottom: 8px;
+    }
+
+    .stat-note {
+        color: #64748b;
+        font-weight: 600;
+        font-size: 14px;
+    }
+
+    .dashboard-subgrid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-top: 18px;
+    }
+
+    .mini-stat {
+        background: #eef2ff;
+        border-radius: 18px;
+        padding: 16px 18px;
+    }
+
+    .mini-stat span {
+        display: block;
+        color: #64748b;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .mini-stat strong {
+        display: block;
+        color: #3730a3;
+        font-weight: 800;
+        font-size: 18px;
+        word-break: break-word;
+    }
+
+    .btn-link-more {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0 18px;
+        border-radius: 12px;
+        background: #2563eb;
+        color: #ffffff;
+        text-decoration: none;
+        font-weight: 800;
+        white-space: nowrap;
+        transition: 0.2s ease;
+    }
+
+    .btn-link-more:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+    }
+
+    .recent-table-wrapper {
+        overflow-x: auto;
+    }
+
+    .recent-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 15px;
+    }
+
+    .recent-table thead th {
+        background: #f1f5f9;
+        color: #0f172a;
+        font-weight: 800;
+        text-align: left;
+        padding: 15px 14px;
+        white-space: nowrap;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .recent-table tbody td {
+        padding: 15px 14px;
+        color: #1e293b;
+        font-weight: 600;
+        border-bottom: 1px solid #e8eef6;
+        vertical-align: middle;
+    }
+
+    .recent-table tbody tr:hover {
+        background: #f8fbff;
+    }
+
+    .recent-badge,
+    .recent-confidence,
+    .recent-plate {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 32px;
+        padding: 0 13px;
+        border-radius: 999px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .recent-badge {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .recent-confidence {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .recent-plate {
+        background: #eef2ff;
+        color: #3730a3;
+    }
+
+    .empty-dashboard {
+        background: #f8fafc;
+        border: 1px dashed #cbd5e1;
+        color: #64748b;
+        border-radius: 18px;
+        padding: 36px 20px;
+        text-align: center;
+        font-weight: 700;
+    }
+
+    .feature-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 22px;
+        margin-bottom: 30px;
+    }
+
+    .feature-card {
+        background: #ffffff;
+        border: 1px solid #e5eaf3;
+        border-radius: 22px;
+        padding: 30px;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+        transition: 0.2s ease;
+    }
+
+    .feature-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.09);
+    }
+
+    .feature-icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 18px;
+        background: #eef2ff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 26px;
+        margin-bottom: 18px;
+    }
+
+    .feature-card h3 {
+        color: #0f172a;
+        font-weight: 800;
+        margin: 0 0 12px;
+    }
+
+    .feature-card p {
+        color: #64748b;
+        font-weight: 500;
+        line-height: 1.7;
+        margin: 0;
+    }
+
+    @media (max-width: 1200px) {
+        .home-hero {
+            grid-template-columns: 1fr;
+        }
+
+        .dashboard-grid,
+        .dashboard-subgrid,
+        .feature-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+
+    @media (max-width: 760px) {
+        .home-hero-content {
+            padding: 34px 28px;
+        }
+
+        .home-hero-content h1 {
+            font-size: 30px;
+        }
+
+        .dashboard-grid,
+        .dashboard-subgrid,
+        .feature-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .section-title-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .btn-link-more {
+            width: 100%;
+        }
+    }
+</style>
+
+
+<div class="home-hero">
+    <div class="home-hero-content">
+        <p class="hero-label">Giao Thông AI</p>
+
+        <h1>Hệ thống nhận diện vi phạm giao thông bằng YOLOv8</h1>
+
+        <p>
+            Ứng dụng trí tuệ nhân tạo trong nhận diện người tham gia giao thông
+            không đội mũ bảo hiểm, hỗ trợ phát hiện lỗi chở quá số người
+            và lưu thông tin biển số nếu nhận dạng được.
+        </p>
+    </div>
+
+    <div class="hero-model-box">
+        <span>Mô hình chính</span>
+        <strong>YOLOv8n</strong>
+        <p>Helmet Detection</p>
+    </div>
+</div>
+
+
+<div class="card intro-card">
+    <h2>Giới thiệu hệ thống</h2>
+
+    <p>
+        Hệ thống được xây dựng nhằm hỗ trợ nhận diện hành vi vi phạm giao thông,
+        cụ thể là trường hợp người tham gia giao thông không đội mũ bảo hiểm
+        và xe máy chở quá số người quy định. Mô hình chính sử dụng thuật toán
+        <b>YOLOv8n</b> đã được huấn luyện với hai lớp đối tượng:
+        <b>with helmet</b> và <b>without helmet</b>.
+    </p>
+
+    <p>
+        Website cho phép người dùng nhận diện thông qua hình ảnh, video tải lên
+        hoặc camera realtime. Khi phát hiện vi phạm, hệ thống sẽ tự động lưu lại
+        ảnh minh chứng, loại vi phạm, độ tin cậy, nguồn phát hiện, thời gian
+        và biển số nếu nhận dạng được vào trang lịch sử.
+    </p>
+</div>
+
+
+<div class="card dashboard-card">
+    <div class="section-title-row">
+        <div>
+            <h2>Dashboard thống kê</h2>
+            <p>
+                Thống kê nhanh các vi phạm đã được hệ thống ghi nhận trong quá trình nhận diện.
+            </p>
+        </div>
+    </div>
+
+    <div class="dashboard-grid">
+        <div class="stat-card">
+            <div class="stat-icon">📌</div>
+            <div class="stat-title">Tổng số vi phạm</div>
+            <div class="stat-number">{{ stats.total if stats is defined else 0 }}</div>
+            <div class="stat-note">Bản ghi đã lưu</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">⛑</div>
+            <div class="stat-title">Không đội mũ</div>
+            <div class="stat-number">{{ stats.no_helmet if stats is defined else 0 }}</div>
+            <div class="stat-note">Lỗi mũ bảo hiểm</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">⚠</div>
+            <div class="stat-title">Chở quá số người</div>
+            <div class="stat-number">{{ stats.overload if stats is defined else 0 }}</div>
+            <div class="stat-note">Lỗi quá số người</div>
+        </div>
+
+        <div class="stat-card">
+            <div class="stat-icon">📅</div>
+            <div class="stat-title">Vi phạm hôm nay</div>
+            <div class="stat-number">{{ stats.today if stats is defined else 0 }}</div>
+            <div class="stat-note">Theo ngày hiện tại</div>
+        </div>
+    </div>
+
+    <div class="dashboard-subgrid">
+        <div class="mini-stat">
+            <span>Nguồn ảnh</span>
+            <strong>{{ stats.image_source if stats is defined else 0 }}</strong>
+        </div>
+
+        <div class="mini-stat">
+            <span>Nguồn video</span>
+            <strong>{{ stats.video_source if stats is defined else 0 }}</strong>
+        </div>
+
+        <div class="mini-stat">
+            <span>Camera realtime</span>
+            <strong>{{ stats.camera_source if stats is defined else 0 }}</strong>
+        </div>
+
+        <div class="mini-stat">
+            <span>Gần nhất</span>
+            <strong>{{ stats.latest_time if stats is defined else "Chưa có dữ liệu" }}</strong>
+        </div>
+    </div>
+</div>
+
+
+<div class="card recent-card">
+    <div class="section-title-row">
+        <div>
+            <h2>Vi phạm gần đây</h2>
+            <p>Hiển thị một số bản ghi vi phạm mới nhất được lưu trong hệ thống.</p>
+        </div>
+
+        <a href="{{ url_for('history') }}" class="btn-link-more">
+            Xem lịch sử
+        </a>
+    </div>
+
+    {% if recent_violations is defined and recent_violations and recent_violations|length > 0 %}
+        <div class="recent-table-wrapper">
+            <table class="recent-table">
+                <thead>
+                    <tr>
+                        <th>Loại vi phạm</th>
+                        <th>Biển số</th>
+                        <th>Độ tin cậy</th>
+                        <th>Nguồn</th>
+                        <th>Thời gian</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in recent_violations %}
+                    <tr>
+                        <td>
+                            <span class="recent-badge">
+                                {{ item.violation_type }}
+                            </span>
+                        </td>
+
+                        <td>
+                            {% if item.plate_number %}
+                                <span class="recent-plate">{{ item.plate_number }}</span>
+                            {% else %}
+                                <span class="recent-plate">Chưa nhận diện</span>
+                            {% endif %}
+                        </td>
+
+                        <td>
+                            {% if item.confidence is not none %}
+                                <span class="recent-confidence">
+                                    {{ "%.2f"|format(item.confidence) }}
+                                </span>
+                            {% else %}
+                                <span class="recent-confidence">-</span>
+                            {% endif %}
+                        </td>
+
+                        <td>{{ item.source_type }}</td>
+                        <td>{{ item.created_at }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    {% else %}
+        <div class="empty-dashboard">
+            Chưa có dữ liệu vi phạm được ghi nhận.
+        </div>
+    {% endif %}
+</div>
+
+
+<div class="feature-grid">
+    <div class="feature-card">
+        <div class="feature-icon">🖼</div>
+        <h3>Nhận diện ảnh / video</h3>
+        <p>
+            Tải ảnh hoặc video lên hệ thống để kiểm tra người tham gia giao thông
+            có đội mũ bảo hiểm hay không, đồng thời hỗ trợ kiểm tra lỗi chở quá số người.
+        </p>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon">📷</div>
+        <h3>Camera realtime</h3>
+        <p>
+            Kết nối camera máy tính để nhận diện trực tiếp theo thời gian thực
+            và lưu lại các trường hợp vi phạm được phát hiện.
+        </p>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon">🗂</div>
+        <h3>Lưu lịch sử</h3>
+        <p>
+            Tự động lưu ảnh minh chứng, thời gian, loại vi phạm, độ tin cậy
+            và biển số nếu nhận dạng được khi hệ thống phát hiện lỗi.
+        </p>
+    </div>
+</div>
+
+{% endblock %}

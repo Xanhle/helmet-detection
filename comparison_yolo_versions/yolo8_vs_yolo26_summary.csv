@@ -1,0 +1,3 @@
+﻿Model,Best epoch,Precision,Recall,mAP50,mAP50-95,Model size (MB),Source CSV,Weight file
+YOLOv8n,20.0,0.81425,0.82914,0.86966,0.51908,5.956583023071289,runs/detect/DoAn_Helmet_YOLOv8n_Finetune_20ep_640/results.csv,runs/detect/DoAn_Helmet_YOLOv8n_Finetune_20ep_640/weights/best.pt
+YOLO26n,29.0,0.83382,0.74543,0.81666,0.47075,5.135380744934082,runs/detect/DoAn_Helmet_YOLO26n_30ep_640_b1/results.csv,runs/detect/DoAn_Helmet_YOLO26n_30ep_640_b1/weights/best.pt

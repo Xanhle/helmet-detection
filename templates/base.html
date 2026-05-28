@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hệ thống nhận diện vi phạm giao thông</title>
+
+    <!-- Font chữ đẹp, đều hơn -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- CSS chính -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Inter", "Segoe UI", Arial, sans-serif;
+            background: #f4f7fb;
+            color: #111827;
+            font-size: 16px;
+            font-weight: 500;
+            letter-spacing: 0.1px;
+        }
+
+        body {
+            display: flex;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* =========================
+           SIDEBAR
+        ========================= */
+        .sidebar {
+            width: 280px;
+            min-height: 100vh;
+            background: #0f172a;
+            color: white;
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            padding: 34px 22px;
+            box-shadow: 8px 0 30px rgba(15, 23, 42, 0.18);
+            z-index: 1000;
+        }
+
+        .logo {
+            margin-bottom: 54px;
+        }
+
+        .logo h2 {
+            margin: 0;
+            color: #38bdf8;
+            font-size: 28px;
+            font-weight: 800;
+            letter-spacing: 0.4px;
+            line-height: 1.2;
+        }
+
+        .logo p {
+            margin: 8px 0 0;
+            color: #cbd5e1;
+            font-size: 14px;
+            font-weight: 600;
+        }
+
+        .sidebar-menu {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .menu-item {
+            display: block;
+            padding: 18px 20px;
+            border-radius: 16px;
+            color: #e5e7eb;
+            text-decoration: none;
+            font-size: 17px;
+            font-weight: 800;
+            letter-spacing: 0.2px;
+            line-height: 1.35;
+            transition: all 0.22s ease;
+            border-left: 4px solid transparent;
+        }
+
+        .menu-item:hover {
+            background: rgba(14, 165, 233, 0.14);
+            color: #ffffff;
+            transform: translateX(3px);
+        }
+
+        .menu-item.active {
+            background: linear-gradient(135deg, #2563eb, #0ea5e9);
+            color: #ffffff;
+            box-shadow: 0 14px 28px rgba(37, 99, 235, 0.28);
+            border-left-color: #38bdf8;
+        }
+
+        /* =========================
+           MAIN CONTENT
+        ========================= */
+        .main-content {
+            margin-left: 280px;
+            width: calc(100% - 280px);
+            min-height: 100vh;
+            padding: 36px 44px;
+            background: #f4f7fb;
+        }
+
+        h1,
+        h2,
+        h3,
+        h4 {
+            font-family: "Inter", "Segoe UI", Arial, sans-serif;
+            color: #0f172a;
+            font-weight: 800;
+            letter-spacing: 0.2px;
+        }
+
+        p {
+            color: #64748b;
+            font-weight: 500;
+            line-height: 1.7;
+        }
+
+        a,
+        button,
+        input,
+        select,
+        textarea,
+        table,
+        th,
+        td,
+        span,
+        label {
+            font-family: "Inter", "Segoe UI", Arial, sans-serif;
+        }
+
+        .page-header {
+            background: #ffffff;
+            border-radius: 22px;
+            padding: 34px 40px;
+            margin-bottom: 30px;
+            border: 1px solid #e5eaf3;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+        }
+
+        .page-header h1 {
+            margin: 0 0 12px;
+            font-size: 34px;
+            line-height: 1.25;
+        }
+
+        .page-header p {
+            margin: 0;
+            font-size: 17px;
+        }
+
+        .card {
+            background: #ffffff;
+            border-radius: 22px;
+            padding: 30px 34px;
+            margin-bottom: 30px;
+            border: 1px solid #e5eaf3;
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+        }
+
+        .card h2 {
+            margin-top: 0;
+        }
+
+        /* =========================
+           ẨN NÚT 3 GẠCH NẾU FILE CSS CŨ CÓ
+        ========================= */
+        .menu-toggle,
+        .sidebar-toggle,
+        .toggle-sidebar,
+        #sidebarToggle,
+        #menuToggle {
+            display: none !important;
+        }
+
+        .topbar,
+        .header-toggle,
+        .mobile-header {
+            display: none !important;
+        }
+
+        /* =========================
+           RESPONSIVE
+        ========================= */
+        @media (max-width: 900px) {
+            .sidebar {
+                width: 230px;
+                padding: 28px 16px;
+            }
+
+            .main-content {
+                margin-left: 230px;
+                width: calc(100% - 230px);
+                padding: 28px 24px;
+            }
+
+            .logo h2 {
+                font-size: 24px;
+            }
+
+            .menu-item {
+                font-size: 15px;
+                padding: 15px 16px;
+            }
+        }
+
+        @media (max-width: 700px) {
+            body {
+                display: block;
+            }
+
+            .sidebar {
+                position: relative;
+                width: 100%;
+                min-height: auto;
+                padding: 24px 18px;
+            }
+
+            .logo {
+                margin-bottom: 24px;
+            }
+
+            .sidebar-menu {
+                gap: 10px;
+            }
+
+            .main-content {
+                margin-left: 0;
+                width: 100%;
+                padding: 22px 16px;
+            }
+
+            .page-header {
+                padding: 26px 22px;
+            }
+
+            .page-header h1 {
+                font-size: 28px;
+            }
+
+            .card {
+                padding: 24px 20px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <aside class="sidebar">
+        <div class="logo">
+            <h2>Giao Thông AI</h2>
+            <p>Helmet Detection</p>
+        </div>
+
+        <nav class="sidebar-menu">
+            <a href="{{ url_for('home') }}"
+               class="menu-item {% if request.endpoint == 'home' %}active{% endif %}">
+                Trang chủ
+            </a>
+
+            <a href="{{ url_for('upload') }}"
+               class="menu-item {% if request.endpoint == 'upload' %}active{% endif %}">
+                Nhận diện ảnh / video
+            </a>
+
+            <a href="{{ url_for('camera_page') }}"
+               class="menu-item {% if request.endpoint == 'camera_page' %}active{% endif %}">
+                Camera realtime
+            </a>
+
+            <a href="{{ url_for('history') }}"
+               class="menu-item {% if request.endpoint == 'history' %}active{% endif %}">
+                Lịch sử vi phạm
+            </a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        {% block content %}{% endblock %}
+    </main>
+
+</body>
+</html>

@@ -1,0 +1,10 @@
+flask
+ultralytics
+opencv-python-headless
+torch
+torchvision
+numpy
+pillow
+gunicorn
+psycopg2-binary
+easyocr

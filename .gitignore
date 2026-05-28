@@ -1,0 +1,13 @@
+runs/
+*.pth
+*.pt
+*.zip
+
+__pycache__/
+*.pyc
+
+.env
+.venv/
+venv/
+
+.DS_Store

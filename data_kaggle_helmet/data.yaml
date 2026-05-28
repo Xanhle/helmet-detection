@@ -1,0 +1,13 @@
+train: ../train/images
+val: ../valid/images
+test: ../test/images
+
+nc: 3
+names: ['Bike', 'Helmet', 'Passenger']
+
+roboflow:
+  workspace: abuzarkhaaan
+  project: traffic-laws-violations-project-b76e2
+  version: 1
+  license: CC BY 4.0
+  url: https://universe.roboflow.com/abuzarkhaaan/traffic-laws-violations-project-b76e2/dataset/1

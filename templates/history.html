@@ -1,0 +1,650 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    .page-header h1,
+    .history-dashboard-card h2,
+    .history-filter-card h2,
+    .history-list-card h2 {
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: 0.2px;
+    }
+
+    .page-header p,
+    .history-filter-header p {
+        color: #64748b;
+        font-weight: 500;
+        line-height: 1.7;
+    }
+
+    .history-dashboard-card,
+    .history-filter-card,
+    .history-list-card {
+        border-radius: 22px;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+        border: 1px solid #e5eaf3;
+    }
+
+    .history-stat-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-top: 18px;
+    }
+
+    .history-stat-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 18px;
+    }
+
+    .history-stat-card span {
+        display: block;
+        color: #64748b;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .history-stat-card strong {
+        color: #2563eb;
+        font-size: 28px;
+        font-weight: 800;
+    }
+
+    .history-source-row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 14px;
+        margin-top: 16px;
+    }
+
+    .history-mini-stat {
+        background: #eef2ff;
+        border-radius: 16px;
+        padding: 14px 16px;
+    }
+
+    .history-mini-stat span {
+        display: block;
+        color: #64748b;
+        font-weight: 600;
+        margin-bottom: 6px;
+    }
+
+    .history-mini-stat strong {
+        color: #3730a3;
+        font-weight: 800;
+        font-size: 20px;
+    }
+
+    .history-filter-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 18px;
+    }
+
+    .history-filter-form {
+        display: grid;
+        grid-template-columns: 1.3fr 1fr 1fr 0.9fr 0.9fr auto;
+        gap: 14px;
+        align-items: end;
+    }
+
+    .filter-group label {
+        display: block;
+        margin-bottom: 8px;
+        color: #334155;
+        font-weight: 700;
+    }
+
+    .filter-group input,
+    .filter-group select {
+        width: 100%;
+        height: 46px;
+        border-radius: 12px;
+        border: 1px solid #dbe3ef;
+        padding: 0 14px;
+        color: #0f172a;
+        background: #ffffff;
+        font-weight: 600;
+        outline: none;
+    }
+
+    .filter-group input:focus,
+    .filter-group select:focus {
+        border-color: #2563eb;
+        box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+    }
+
+    .btn-primary,
+    .btn-secondary,
+    .btn-danger,
+    .btn-delete {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 42px;
+        padding: 0 18px;
+        border-radius: 12px;
+        border: none;
+        text-decoration: none;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+        cursor: pointer;
+        transition: 0.2s ease;
+        white-space: nowrap;
+    }
+
+    .btn-primary {
+        background: #2563eb;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+        background: #eef2f7;
+        color: #0f172a;
+    }
+
+    .btn-secondary:hover {
+        background: #e2e8f0;
+    }
+
+    .btn-danger {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .btn-danger:hover {
+        background: #fecaca;
+    }
+
+    .history-list-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 18px;
+    }
+
+    .history-list-header span {
+        background: #eef2ff;
+        color: #2563eb;
+        font-weight: 800;
+        padding: 8px 18px;
+        border-radius: 999px;
+    }
+
+    .history-table-wrapper {
+        width: 100%;
+        overflow-x: auto;
+    }
+
+    .history-modern-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 15px;
+    }
+
+    .history-modern-table thead th {
+        background: #f1f5f9;
+        color: #0f172a;
+        font-weight: 800;
+        text-align: left;
+        padding: 16px 14px;
+        white-space: nowrap;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .history-modern-table tbody td {
+        padding: 16px 14px;
+        vertical-align: middle;
+        border-bottom: 1px solid #e8eef6;
+        color: #1e293b;
+        font-weight: 600;
+    }
+
+    .history-modern-table tbody tr:hover {
+        background: #f8fbff;
+    }
+
+    .history-id {
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    .history-thumb {
+        width: 96px;
+        height: 62px;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 3px solid #0ea5e9;
+        cursor: zoom-in;
+        transition: 0.2s ease;
+    }
+
+    .history-thumb:hover {
+        transform: scale(1.05);
+        box-shadow: 0 10px 25px rgba(14, 165, 233, 0.25);
+    }
+
+    .no-image {
+        color: #94a3b8;
+        font-weight: 600;
+    }
+
+    .violation-badge,
+    .source-pill,
+    .confidence-pill {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 34px;
+        padding: 0 14px;
+        border-radius: 999px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .helmet-badge {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .overload-badge {
+        background: #ffedd5;
+        color: #c2410c;
+    }
+
+    .source-pill {
+        background: #eef2ff;
+        color: #3730a3;
+    }
+
+    .confidence-pill {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .history-time {
+        color: #334155;
+        white-space: nowrap;
+    }
+
+    .history-actions {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .btn-delete {
+        background: #fee2e2;
+        color: #b91c1c;
+        min-width: 76px;
+        height: 40px;
+    }
+
+    .btn-delete:hover {
+        background: #fecaca;
+        transform: translateY(-1px);
+    }
+
+    .empty-history-box {
+        text-align: center;
+        padding: 50px 20px;
+        background: #f8fafc;
+        border-radius: 18px;
+        border: 1px dashed #cbd5e1;
+    }
+
+    .empty-history-box h3 {
+        color: #0f172a;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+
+    .empty-history-box p {
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    .image-modal {
+        position: fixed;
+        z-index: 9999;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.82);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        padding: 30px;
+    }
+
+    .image-modal-content {
+        max-width: 92%;
+        max-height: 90vh;
+        border-radius: 18px;
+        box-shadow: 0 25px 80px rgba(0, 0, 0, 0.45);
+    }
+
+    .image-modal-close {
+        position: fixed;
+        top: 22px;
+        right: 32px;
+        color: white;
+        font-size: 42px;
+        font-weight: 800;
+        cursor: pointer;
+    }
+
+    @media (max-width: 1200px) {
+        .history-stat-grid,
+        .history-source-row {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .history-filter-form {
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .filter-actions {
+            grid-column: span 2;
+        }
+    }
+
+    @media (max-width: 768px) {
+        .history-stat-grid,
+        .history-source-row,
+        .history-filter-form {
+            grid-template-columns: 1fr;
+        }
+
+        .history-filter-header {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+
+        .filter-actions {
+            grid-column: span 1;
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .btn-primary,
+        .btn-secondary,
+        .btn-danger {
+            width: 100%;
+        }
+    }
+</style>
+
+
+<div class="page-header">
+    <h1>Lịch sử vi phạm</h1>
+    <p>Danh sách các vi phạm đã được hệ thống phát hiện và lưu lại trong quá trình nhận diện.</p>
+</div>
+
+
+<div class="card history-dashboard-card">
+    <h2>Thống kê lịch sử</h2>
+
+    <div class="history-stat-grid">
+        <div class="history-stat-card">
+            <span>Tổng vi phạm</span>
+            <strong>{{ stats.total }}</strong>
+        </div>
+
+        <div class="history-stat-card">
+            <span>Không đội mũ</span>
+            <strong>{{ stats.no_helmet }}</strong>
+        </div>
+
+        <div class="history-stat-card">
+            <span>Chở quá số người</span>
+            <strong>{{ stats.overload }}</strong>
+        </div>
+
+        <div class="history-stat-card">
+            <span>Vi phạm hôm nay</span>
+            <strong>{{ stats.today }}</strong>
+        </div>
+    </div>
+
+    <div class="history-source-row">
+        <div class="history-mini-stat">
+            <span>Nguồn ảnh</span>
+            <strong>{{ stats.image_source }}</strong>
+        </div>
+
+        <div class="history-mini-stat">
+            <span>Nguồn video</span>
+            <strong>{{ stats.video_source }}</strong>
+        </div>
+
+        <div class="history-mini-stat">
+            <span>Camera realtime</span>
+            <strong>{{ stats.camera_source }}</strong>
+        </div>
+
+        <div class="history-mini-stat">
+            <span>Kết quả đang hiển thị</span>
+            <strong>{{ filtered_count }}</strong>
+        </div>
+    </div>
+</div>
+
+
+<div class="card history-filter-card">
+    <div class="history-filter-header">
+        <div>
+            <h2>Bộ lọc lịch sử</h2>
+            <p>Lọc dữ liệu theo loại vi phạm, nguồn phát hiện, thời gian hoặc từ khóa.</p>
+        </div>
+
+        <a href="{{ url_for('delete_history') }}"
+           class="btn-danger"
+           onclick="return confirm('Bạn có chắc chắn muốn xóa toàn bộ lịch sử vi phạm không?');">
+            Xóa toàn bộ
+        </a>
+    </div>
+
+    <form method="GET" action="{{ url_for('history') }}" class="history-filter-form">
+        <div class="filter-group">
+            <label>Từ khóa</label>
+            <input type="text"
+                   name="q"
+                   value="{{ filters.q }}"
+                   placeholder="VD: mũ, camera, biển số, video...">
+        </div>
+
+        <div class="filter-group">
+            <label>Loại vi phạm</label>
+            <select name="violation_type">
+                <option value="">Tất cả</option>
+                <option value="no_helmet" {% if filters.violation_type == 'no_helmet' %}selected{% endif %}>
+                    Không đội mũ
+                </option>
+                <option value="overload" {% if filters.violation_type == 'overload' %}selected{% endif %}>
+                    Chở quá số người
+                </option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Nguồn phát hiện</label>
+            <select name="source_type">
+                <option value="">Tất cả</option>
+                <option value="image" {% if filters.source_type == 'image' %}selected{% endif %}>
+                    Ảnh tải lên
+                </option>
+                <option value="video" {% if filters.source_type == 'video' %}selected{% endif %}>
+                    Video tải lên
+                </option>
+                <option value="camera" {% if filters.source_type == 'camera' %}selected{% endif %}>
+                    Camera realtime
+                </option>
+            </select>
+        </div>
+
+        <div class="filter-group">
+            <label>Từ ngày</label>
+            <input type="date" name="date_from" value="{{ filters.date_from }}">
+        </div>
+
+        <div class="filter-group">
+            <label>Đến ngày</label>
+            <input type="date" name="date_to" value="{{ filters.date_to }}">
+        </div>
+
+        <div class="filter-actions">
+            <button type="submit" class="btn-primary">Lọc dữ liệu</button>
+            <a href="{{ url_for('history') }}" class="btn-secondary">Đặt lại</a>
+        </div>
+    </form>
+</div>
+
+
+<div class="card history-list-card">
+    <div class="history-list-header">
+        <h2>Danh sách vi phạm</h2>
+        <span>{{ filtered_count }} bản ghi</span>
+    </div>
+
+    {% if violations and violations|length > 0 %}
+
+    <div class="history-table-wrapper">
+        <table class="history-modern-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Ảnh minh chứng</th>
+                    <th>Loại vi phạm</th>
+                    <th>Biển số</th>
+                    <th>Độ tin cậy</th>
+                    <th>Nguồn</th>
+                    <th>Thời gian</th>
+                    <th>Thao tác</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for item in violations %}
+                <tr>
+                    <td class="history-id">#{{ item.id }}</td>
+
+                    <td>
+                        {% if item.image_path %}
+                            <img src="{{ item.image_path }}"
+                                 alt="Ảnh vi phạm"
+                                 class="history-thumb"
+                                 title="Bấm để xem ảnh lớn"
+                                 onclick="openImageModal('{{ item.image_path }}')">
+                        {% else %}
+                            <span class="no-image">Không có ảnh</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% set violation_name = item.violation_type|lower %}
+
+                        {% if 'chở quá' in violation_name or 'quá số người' in violation_name or 'overload' in violation_name %}
+                            <span class="violation-badge overload-badge">
+                                {{ item.violation_type }}
+                            </span>
+                        {% else %}
+                            <span class="violation-badge helmet-badge">
+                                {{ item.violation_type }}
+                            </span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if item.plate_number %}
+                            <span class="source-pill">{{ item.plate_number }}</span>
+                        {% else %}
+                            <span class="source-pill">Chưa nhận diện</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if item.confidence is not none %}
+                            <span class="confidence-pill">
+                                {{ "%.2f"|format(item.confidence) }}
+                            </span>
+                        {% else %}
+                            <span class="confidence-pill">-</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        <span class="source-pill">{{ item.source_type }}</span>
+                    </td>
+
+                    <td class="history-time">{{ item.created_at }}</td>
+
+                    <td>
+                        <div class="history-actions">
+                            <a href="{{ url_for('delete_violation', violation_id=item.id) }}"
+                               class="btn-delete"
+                               onclick="return confirm('Bạn có chắc chắn muốn xóa bản ghi này không?');">
+                                Xóa
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    {% else %}
+        <div class="empty-history-box">
+            <h3>Chưa có dữ liệu phù hợp</h3>
+            <p>Không tìm thấy bản ghi vi phạm theo bộ lọc hiện tại.</p>
+        </div>
+    {% endif %}
+</div>
+
+
+<div id="imageModal" class="image-modal" onclick="closeImageModal()">
+    <span class="image-modal-close">&times;</span>
+    <img id="modalImage" class="image-modal-content" alt="Ảnh vi phạm phóng to">
+</div>
+
+
+<script>
+    function openImageModal(imageSrc) {
+        const modal = document.getElementById("imageModal");
+        const modalImage = document.getElementById("modalImage");
+
+        modal.style.display = "flex";
+        modalImage.src = imageSrc;
+    }
+
+    function closeImageModal() {
+        const modal = document.getElementById("imageModal");
+        modal.style.display = "none";
+    }
+
+    document.addEventListener("keydown", function(event) {
+        if (event.key === "Escape") {
+            closeImageModal();
+        }
+    });
+</script>
+
+{% endblock %}

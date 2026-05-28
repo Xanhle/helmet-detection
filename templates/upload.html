@@ -1,0 +1,633 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    .upload-page-header h1 {
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: 0.2px;
+    }
+
+    .upload-page-header p {
+        color: #64748b;
+        font-weight: 500;
+        line-height: 1.7;
+    }
+
+    .upload-card,
+    .result-modern-card {
+        border-radius: 22px;
+        border: 1px solid #e5eaf3;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+    }
+
+    .upload-card h2,
+    .result-modern-card h2 {
+        color: #0f172a;
+        font-weight: 800;
+        margin-bottom: 18px;
+    }
+
+    .upload-form {
+        margin-top: 18px;
+    }
+
+    .upload-label {
+        display: block;
+        color: #334155;
+        font-weight: 800;
+        margin-bottom: 10px;
+    }
+
+    .file-input-box {
+        border: 2px dashed #cbd5e1;
+        background: #f8fafc;
+        border-radius: 22px;
+        padding: 26px;
+        transition: 0.2s ease;
+        margin-bottom: 20px;
+    }
+
+    .file-input-box:hover {
+        border-color: #2563eb;
+        background: #f0f7ff;
+    }
+
+    .file-input-box input[type="file"] {
+        width: 100%;
+        font-weight: 700;
+        color: #334155;
+        cursor: pointer;
+    }
+
+    .file-input-box input[type="file"]::file-selector-button {
+        border: none;
+        background: #2563eb;
+        color: #ffffff;
+        border-radius: 12px;
+        padding: 12px 18px;
+        margin-right: 14px;
+        font-weight: 800;
+        cursor: pointer;
+        transition: 0.2s ease;
+    }
+
+    .file-input-box input[type="file"]::file-selector-button:hover {
+        background: #1d4ed8;
+    }
+
+    .preview-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 22px;
+        padding: 22px;
+        margin-bottom: 22px;
+    }
+
+    .preview-box h3 {
+        margin: 0 0 16px;
+        color: #0f172a;
+        font-weight: 800;
+        text-align: center;
+    }
+
+    .preview-image,
+    .preview-video {
+        width: 100%;
+        max-height: 480px;
+        object-fit: contain;
+        border-radius: 18px;
+        background: #0f172a;
+        border: 1px solid #1e293b;
+    }
+
+    .upload-btn {
+        width: 100%;
+        height: 50px;
+        border-radius: 14px;
+        border: none;
+        background: #2563eb;
+        color: #ffffff;
+        font-weight: 800;
+        font-size: 16px;
+        letter-spacing: 0.2px;
+        cursor: pointer;
+        transition: 0.2s ease;
+    }
+
+    .upload-btn:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22);
+    }
+
+    .alert-message {
+        background: #fee2e2;
+        color: #b91c1c;
+        border-left: 5px solid #ef4444;
+        border-radius: 16px;
+        padding: 16px 20px;
+        font-weight: 800;
+        margin-bottom: 30px;
+    }
+
+    .result-header-row {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 18px;
+        margin-bottom: 24px;
+    }
+
+    .result-header-row h2 {
+        margin: 0 0 8px;
+    }
+
+    .result-subtitle {
+        margin: 0;
+        color: #64748b;
+        font-weight: 500;
+        line-height: 1.7;
+    }
+
+    .result-status {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        min-height: 40px;
+        padding: 0 18px;
+        border-radius: 999px;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .result-status-danger {
+        background: #fee2e2;
+        color: #b91c1c;
+    }
+
+    .result-status-safe {
+        background: #dcfce7;
+        color: #166534;
+    }
+
+    .result-summary-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 26px;
+    }
+
+    .result-summary-card {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 18px;
+        padding: 18px;
+    }
+
+    .result-summary-card span {
+        display: block;
+        color: #64748b;
+        font-weight: 700;
+        margin-bottom: 8px;
+    }
+
+    .result-summary-card strong {
+        display: block;
+        color: #2563eb;
+        font-size: 28px;
+        font-weight: 800;
+        line-height: 1.1;
+    }
+
+    .result-display-layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.25fr) minmax(320px, 0.75fr);
+        gap: 26px;
+        align-items: start;
+    }
+
+    .result-media-panel,
+    .result-info-panel {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 22px;
+        padding: 22px;
+    }
+
+    .result-media-panel h3,
+    .result-info-panel h3 {
+        margin: 0 0 16px;
+        color: #0f172a;
+        font-weight: 800;
+        text-align: center;
+    }
+
+    .result-image-modern,
+    .result-video-modern {
+        width: 100%;
+        max-height: 620px;
+        object-fit: contain;
+        border-radius: 18px;
+        background: #0f172a;
+        border: 1px solid #1e293b;
+        display: block;
+    }
+
+    .violation-list-modern {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .violation-card-modern {
+        display: grid;
+        grid-template-columns: 46px 1fr auto;
+        gap: 14px;
+        align-items: center;
+        border-radius: 18px;
+        padding: 16px;
+        border: 1px solid transparent;
+    }
+
+    .helmet-card {
+        background: #fff1f2;
+        border-color: #fecdd3;
+    }
+
+    .overload-card {
+        background: #fff7ed;
+        border-color: #fed7aa;
+    }
+
+    .violation-icon {
+        width: 46px;
+        height: 46px;
+        border-radius: 15px;
+        background: #ef4444;
+        color: #ffffff;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        font-size: 22px;
+    }
+
+    .overload-card .violation-icon {
+        background: #f97316;
+    }
+
+    .violation-content h4 {
+        margin: 0 0 6px;
+        color: #0f172a;
+        font-weight: 800;
+        line-height: 1.35;
+    }
+
+    .violation-content p {
+        margin: 0;
+        color: #64748b;
+        font-weight: 600;
+        line-height: 1.5;
+    }
+
+    .plate-text {
+        display: inline-flex;
+        margin-top: 8px;
+        min-height: 30px;
+        padding: 0 12px;
+        border-radius: 999px;
+        align-items: center;
+        justify-content: center;
+        background: #eef2ff;
+        color: #3730a3;
+        font-weight: 800;
+        white-space: nowrap;
+    }
+
+    .confidence-box {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 16px;
+        padding: 12px 14px;
+        min-width: 96px;
+        text-align: center;
+    }
+
+    .confidence-box span {
+        display: block;
+        color: #64748b;
+        font-weight: 700;
+        font-size: 13px;
+        margin-bottom: 6px;
+    }
+
+    .confidence-box strong {
+        color: #166534;
+        font-size: 22px;
+        font-weight: 800;
+    }
+
+    .safe-result-box {
+        background: #dcfce7;
+        color: #166534;
+        border-left: 5px solid #22c55e;
+        border-radius: 18px;
+        padding: 22px;
+        text-align: center;
+    }
+
+    .safe-result-box h4 {
+        margin: 0 0 8px;
+        color: #166534;
+        font-weight: 800;
+    }
+
+    .safe-result-box p {
+        margin: 0;
+        color: #166534;
+        font-weight: 600;
+        line-height: 1.6;
+    }
+
+    @media (max-width: 1200px) {
+        .result-summary-grid {
+            grid-template-columns: repeat(2, 1fr);
+        }
+
+        .result-display-layout {
+            grid-template-columns: 1fr;
+        }
+    }
+
+    @media (max-width: 700px) {
+        .result-header-row {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .result-status {
+            width: 100%;
+        }
+
+        .result-summary-grid {
+            grid-template-columns: 1fr;
+        }
+
+        .violation-card-modern {
+            grid-template-columns: 1fr;
+            text-align: center;
+        }
+
+        .violation-icon {
+            margin: 0 auto;
+        }
+
+        .confidence-box {
+            width: 100%;
+        }
+    }
+</style>
+
+
+<div class="page-header upload-page-header">
+    <h1>Nhận diện bằng hình ảnh / video</h1>
+    <p>
+        Tải lên ảnh hoặc video để hệ thống nhận diện mũ bảo hiểm,
+        lỗi chở quá số người và hỗ trợ nhận dạng biển số nếu có trong ảnh.
+    </p>
+</div>
+
+
+<div class="card upload-card">
+    <h2>Tải file lên hệ thống</h2>
+
+    <form action="{{ url_for('upload') }}"
+          method="POST"
+          enctype="multipart/form-data"
+          class="upload-form">
+
+        <label class="upload-label">Chọn ảnh hoặc video:</label>
+
+        <div class="file-input-box">
+            <input type="file"
+                   name="file"
+                   id="fileInput"
+                   accept="image/*,video/*"
+                   required>
+        </div>
+
+        <div id="previewBox" class="preview-box" style="display: none;">
+            <h3>File chuẩn bị nhận diện</h3>
+
+            <img id="previewImage"
+                 class="preview-image"
+                 style="display: none;"
+                 alt="Ảnh xem trước">
+
+            <video id="previewVideo"
+                   class="preview-video"
+                   style="display: none;"
+                   controls>
+                Trình duyệt không hỗ trợ xem trước video.
+            </video>
+        </div>
+
+        <button type="submit" class="upload-btn">
+            Bắt đầu nhận diện
+        </button>
+    </form>
+</div>
+
+
+{% if message %}
+<div class="alert-message">
+    {{ message }}
+</div>
+{% endif %}
+
+
+{% if result_file %}
+
+{% set ns = namespace(no_helmet=0, overload=0) %}
+
+{% for item in detected_violations %}
+    {% set violation_name = item.class_name|lower %}
+
+    {% if 'không đội mũ' in violation_name or 'without helmet' in violation_name or 'no helmet' in violation_name %}
+        {% set ns.no_helmet = ns.no_helmet + 1 %}
+    {% endif %}
+
+    {% if 'chở quá' in violation_name or 'quá số người' in violation_name or 'overload' in violation_name %}
+        {% set ns.overload = ns.overload + 1 %}
+    {% endif %}
+{% endfor %}
+
+
+<div class="card result-modern-card">
+    <div class="result-header-row">
+        <div>
+            <h2>Kết quả nhận diện</h2>
+            <p class="result-subtitle">
+                Hệ thống đã xử lý file tải lên và hiển thị kết quả nhận diện bên dưới.
+            </p>
+        </div>
+
+        {% if detected_violations and detected_violations|length > 0 %}
+            <span class="result-status result-status-danger">Có vi phạm</span>
+        {% else %}
+            <span class="result-status result-status-safe">Không phát hiện vi phạm</span>
+        {% endif %}
+    </div>
+
+    <div class="result-summary-grid">
+        <div class="result-summary-card">
+            <span>Loại dữ liệu</span>
+            {% if file_type == "image" %}
+                <strong>Ảnh</strong>
+            {% elif file_type == "video" %}
+                <strong>Video</strong>
+            {% else %}
+                <strong>Không xác định</strong>
+            {% endif %}
+        </div>
+
+        <div class="result-summary-card">
+            <span>Tổng số lỗi</span>
+            <strong>{{ detected_violations|length }}</strong>
+        </div>
+
+        <div class="result-summary-card">
+            <span>Không đội mũ</span>
+            <strong>{{ ns.no_helmet }}</strong>
+        </div>
+
+        <div class="result-summary-card">
+            <span>Chở quá số người</span>
+            <strong>{{ ns.overload }}</strong>
+        </div>
+    </div>
+
+    <div class="result-display-layout">
+        <div class="result-media-panel">
+            <h3>Ảnh / video sau nhận diện</h3>
+
+            {% if file_type == "image" %}
+                <img src="{{ result_file }}"
+                     class="result-image-modern"
+                     alt="Kết quả nhận diện">
+            {% elif file_type == "video" %}
+                <video class="result-video-modern" controls>
+                    <source src="{{ result_file }}" type="video/mp4">
+                    Trình duyệt không hỗ trợ phát video.
+                </video>
+            {% endif %}
+        </div>
+
+        <div class="result-info-panel">
+            <h3>Lỗi vi phạm phát hiện</h3>
+
+            {% if detected_violations and detected_violations|length > 0 %}
+                <div class="violation-list-modern">
+                    {% for item in detected_violations %}
+                        {% set violation_name = item.class_name|lower %}
+
+                        {% if 'chở quá' in violation_name or 'quá số người' in violation_name or 'overload' in violation_name %}
+                            <div class="violation-card-modern overload-card">
+                                <div class="violation-icon">⚠</div>
+
+                                <div class="violation-content">
+                                    <h4>{{ item.class_name }}</h4>
+                                    <p>Hệ thống phát hiện dấu hiệu chở quá số người quy định.</p>
+
+                                    {% if item.plate_number %}
+                                        <span class="plate-text">Biển số: {{ item.plate_number }}</span>
+                                    {% else %}
+                                        <span class="plate-text">Biển số: Chưa nhận diện</span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="confidence-box">
+                                    <span>Độ tin cậy</span>
+                                    <strong>{{ "%.2f"|format(item.confidence) }}</strong>
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="violation-card-modern helmet-card">
+                                <div class="violation-icon">!</div>
+
+                                <div class="violation-content">
+                                    <h4>{{ item.class_name }}</h4>
+                                    <p>Hệ thống phát hiện đối tượng không đội mũ bảo hiểm.</p>
+
+                                    {% if item.plate_number %}
+                                        <span class="plate-text">Biển số: {{ item.plate_number }}</span>
+                                    {% else %}
+                                        <span class="plate-text">Biển số: Chưa nhận diện</span>
+                                    {% endif %}
+                                </div>
+
+                                <div class="confidence-box">
+                                    <span>Độ tin cậy</span>
+                                    <strong>{{ "%.2f"|format(item.confidence) }}</strong>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            {% else %}
+                <div class="safe-result-box">
+                    <h4>Không phát hiện vi phạm rõ ràng</h4>
+                    <p>
+                        File đã được xử lý, hệ thống không ghi nhận lỗi không đội mũ
+                        hoặc chở quá số người.
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endif %}
+
+
+<script>
+    const fileInput = document.getElementById("fileInput");
+    const previewBox = document.getElementById("previewBox");
+    const previewImage = document.getElementById("previewImage");
+    const previewVideo = document.getElementById("previewVideo");
+
+    fileInput.addEventListener("change", function () {
+        const file = this.files[0];
+
+        if (!file) {
+            previewBox.style.display = "none";
+            previewImage.style.display = "none";
+            previewVideo.style.display = "none";
+            return;
+        }
+
+        const fileURL = URL.createObjectURL(file);
+
+        previewBox.style.display = "block";
+
+        if (file.type.startsWith("image/")) {
+            previewImage.src = fileURL;
+            previewImage.style.display = "block";
+
+            previewVideo.style.display = "none";
+            previewVideo.src = "";
+        } else if (file.type.startsWith("video/")) {
+            previewVideo.src = fileURL;
+            previewVideo.style.display = "block";
+
+            previewImage.style.display = "none";
+            previewImage.src = "";
+        } else {
+            previewBox.style.display = "none";
+        }
+    });
+</script>
+
+{% endblock %}

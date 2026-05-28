@@ -1,0 +1,5 @@
+train: C:/DoAn_GiaoThong/vietnam_plate_dataset/train/images
+val: C:/DoAn_GiaoThong/vietnam_plate_dataset/train/images
+
+nc: 1
+names: ['plate']

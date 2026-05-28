@@ -1,0 +1,520 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    .camera-page-header h1 {
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: 0.2px;
+    }
+
+    .camera-page-header p {
+        color: #64748b;
+        font-weight: 500;
+        line-height: 1.7;
+    }
+
+    .camera-card,
+    .camera-violation-card {
+        border-radius: 22px;
+        border: 1px solid #e5eaf3;
+        box-shadow: 0 18px 45px rgba(15, 23, 42, 0.06);
+    }
+
+    .camera-card h2,
+    .camera-violation-card h2 {
+        font-weight: 800;
+        color: #0f172a;
+        margin-bottom: 20px;
+    }
+
+    .camera-actions {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 28px;
+    }
+
+    .camera-btn {
+        min-width: 160px;
+        height: 48px;
+        border-radius: 14px;
+        border: none;
+        cursor: pointer;
+        font-weight: 800;
+        font-size: 15px;
+        letter-spacing: 0.2px;
+        transition: 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .camera-btn-primary {
+        background: #2563eb;
+        color: #ffffff;
+    }
+
+    .camera-btn-primary:hover {
+        background: #1d4ed8;
+        transform: translateY(-1px);
+        box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22);
+    }
+
+    .camera-btn-success {
+        background: #0ea5e9;
+        color: #ffffff;
+    }
+
+    .camera-btn-success:hover {
+        background: #0284c7;
+        transform: translateY(-1px);
+        box-shadow: 0 10px 24px rgba(14, 165, 233, 0.22);
+    }
+
+    .camera-btn-danger {
+        background: #ef4444;
+        color: #ffffff;
+    }
+
+    .camera-btn-danger:hover {
+        background: #dc2626;
+        transform: translateY(-1px);
+        box-shadow: 0 10px 24px rgba(239, 68, 68, 0.22);
+    }
+
+    .camera-btn-secondary {
+        background: #e2e8f0;
+        color: #0f172a;
+    }
+
+    .camera-btn-secondary:hover {
+        background: #cbd5e1;
+        transform: translateY(-1px);
+    }
+
+    .camera-wrapper {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 28px;
+        align-items: start;
+    }
+
+    .camera-box {
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 20px;
+    }
+
+    .camera-box h3 {
+        text-align: center;
+        color: #0f172a;
+        font-weight: 800;
+        margin-top: 0;
+        margin-bottom: 16px;
+        font-size: 22px;
+    }
+
+    .camera-display,
+    .result-display {
+        width: 100%;
+        height: 360px;
+        object-fit: contain;
+        border-radius: 18px;
+        background: #0f172a;
+        border: 1px solid #1e293b;
+        display: block;
+    }
+
+    .result-display {
+        color: #ffffff;
+    }
+
+    .camera-status {
+        margin-top: 22px;
+        min-height: 56px;
+        border-radius: 16px;
+        padding: 16px 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        font-weight: 800;
+        line-height: 1.5;
+    }
+
+    .safe-text {
+        background: #dcfce7;
+        color: #166534;
+        border-left: 5px solid #22c55e;
+    }
+
+    .warning-text {
+        background: #fee2e2;
+        color: #b91c1c;
+        border-left: 5px solid #ef4444;
+    }
+
+    .neutral-text {
+        background: #eef2ff;
+        color: #3730a3;
+        border-left: 5px solid #6366f1;
+    }
+
+    .violation-box {
+        margin-top: 8px;
+    }
+
+    .violation-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+        gap: 14px;
+    }
+
+    .violation-item {
+        background: #fff1f2;
+        border: 1px solid #fecdd3;
+        border-left: 5px solid #ef4444;
+        border-radius: 16px;
+        padding: 16px 18px;
+    }
+
+    .violation-item b {
+        display: block;
+        color: #b91c1c;
+        font-size: 17px;
+        font-weight: 800;
+        margin-bottom: 8px;
+    }
+
+    .violation-item p {
+        margin: 0;
+        color: #64748b;
+        font-weight: 600;
+    }
+
+    .empty-realtime-box {
+        background: #dcfce7;
+        color: #166534;
+        border-left: 5px solid #22c55e;
+        border-radius: 16px;
+        padding: 18px 20px;
+        font-weight: 800;
+        text-align: center;
+    }
+
+    @media (max-width: 1000px) {
+        .camera-wrapper {
+            grid-template-columns: 1fr;
+        }
+
+        .camera-display,
+        .result-display {
+            height: 320px;
+        }
+    }
+
+    @media (max-width: 640px) {
+        .camera-actions {
+            flex-direction: column;
+            align-items: stretch;
+        }
+
+        .camera-btn {
+            width: 100%;
+        }
+
+        .camera-display,
+        .result-display {
+            height: 260px;
+        }
+    }
+</style>
+
+
+<div class="page-header camera-page-header">
+    <h1>Nhận diện bằng camera realtime</h1>
+    <p>
+        Camera sẽ được mở trực tiếp trên thiết bị đang truy cập website.
+        Hệ thống sẽ gửi từng khung hình về server để nhận diện lỗi không đội mũ bảo hiểm,
+        chở quá số người và hỗ trợ nhận dạng biển số nếu có trong ảnh.
+    </p>
+</div>
+
+
+<div class="card camera-card">
+    <h2>Camera realtime</h2>
+
+    <div class="camera-actions">
+        <button class="camera-btn camera-btn-primary" onclick="startCamera()">
+            Mở camera
+        </button>
+
+        <button class="camera-btn camera-btn-success" onclick="startDetection()">
+            Bắt đầu nhận diện
+        </button>
+
+        <button class="camera-btn camera-btn-danger" onclick="stopDetection()">
+            Dừng nhận diện
+        </button>
+
+        <button class="camera-btn camera-btn-secondary" onclick="stopCamera()">
+            Tắt camera
+        </button>
+    </div>
+
+    <div class="camera-wrapper">
+        <div class="camera-box">
+            <h3>Camera gốc</h3>
+
+            <video
+                id="webcam"
+                class="camera-display"
+                autoplay
+                playsinline
+                muted>
+            </video>
+        </div>
+
+        <div class="camera-box">
+            <h3>Kết quả nhận diện</h3>
+
+            <img
+                id="result-frame"
+                class="result-display"
+                alt="Kết quả nhận diện">
+        </div>
+    </div>
+
+    <canvas id="capture-canvas" style="display: none;"></canvas>
+
+    <p id="camera-status" class="camera-status neutral-text">
+        Chưa mở camera.
+    </p>
+</div>
+
+
+<div class="card camera-violation-card">
+    <h2>Lỗi vi phạm realtime</h2>
+
+    <div id="violation-box" class="violation-box">
+        <div class="empty-realtime-box">
+            Chưa có dữ liệu nhận diện.
+        </div>
+    </div>
+</div>
+
+
+<script>
+    let webcamStream = null;
+    let detectTimer = null;
+    let isProcessing = false;
+
+    async function startCamera() {
+        const video = document.getElementById("webcam");
+        const statusText = document.getElementById("camera-status");
+
+        try {
+            webcamStream = await navigator.mediaDevices.getUserMedia({
+                video: {
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                    facingMode: "environment"
+                },
+                audio: false
+            });
+
+            video.srcObject = webcamStream;
+
+            await video.play();
+
+            statusText.innerText = "Camera đã bật. Hệ thống đang tự động nhận diện...";
+            statusText.className = "camera-status safe-text";
+
+            startDetection();
+
+        } catch (error) {
+            console.error(error);
+            statusText.innerText = "Không mở được camera. Hãy kiểm tra quyền camera trên trình duyệt.";
+            statusText.className = "camera-status warning-text";
+        }
+    }
+
+    async function sendFrameToServer() {
+        if (isProcessing) {
+            return;
+        }
+
+        const video = document.getElementById("webcam");
+        const canvas = document.getElementById("capture-canvas");
+        const resultFrame = document.getElementById("result-frame");
+        const statusText = document.getElementById("camera-status");
+        const violationBox = document.getElementById("violation-box");
+
+        if (!webcamStream) {
+            statusText.innerText = "Bạn cần mở camera trước.";
+            statusText.className = "camera-status warning-text";
+            return;
+        }
+
+        if (!video.videoWidth || !video.videoHeight) {
+            return;
+        }
+
+        isProcessing = true;
+
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        const imageData = canvas.toDataURL("image/jpeg", 0.75);
+
+        try {
+            const response = await fetch("/detect_webcam_frame", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    image: imageData
+                })
+            });
+
+            const data = await response.json();
+
+            if (!response.ok) {
+                const errorMessage = data.error || "Server xử lý frame thất bại.";
+                statusText.innerText = "Lỗi: " + errorMessage;
+                statusText.className = "camera-status warning-text";
+                isProcessing = false;
+                return;
+            }
+
+            if (data.image) {
+                resultFrame.src = data.image;
+            }
+
+            if (data.message) {
+                statusText.innerText = data.message;
+
+                if (data.message.includes("Phát hiện vi phạm")) {
+                    statusText.className = "camera-status warning-text";
+                } else {
+                    statusText.className = "camera-status safe-text";
+                }
+            }
+
+            if (data.violations && data.violations.length > 0) {
+                let html = '<div class="violation-list">';
+
+                data.violations.forEach(item => {
+                    let confidence = 0;
+
+                    if (item.confidence !== undefined && item.confidence !== null) {
+                        confidence = Number(item.confidence);
+                    }
+
+                    let plateText = "";
+
+                    if (item.plate_number) {
+                        plateText = `<p>Biển số: <b>${item.plate_number}</b></p>`;
+                    }
+
+                    html += `
+                        <div class="violation-item">
+                            <b>${item.class_name}</b>
+                            <p>Độ tin cậy: ${confidence.toFixed(2)}</p>
+                            ${plateText}
+                        </div>
+                    `;
+                });
+
+                html += '</div>';
+                violationBox.innerHTML = html;
+            } else {
+                violationBox.innerHTML = `
+                    <div class="empty-realtime-box">
+                        Không phát hiện vi phạm.
+                    </div>
+                `;
+            }
+
+        } catch (error) {
+            console.error(error);
+            statusText.innerText = "Lỗi gửi frame về server.";
+            statusText.className = "camera-status warning-text";
+        }
+
+        isProcessing = false;
+    }
+
+    function startDetection() {
+        const statusText = document.getElementById("camera-status");
+
+        if (!webcamStream) {
+            statusText.innerText = "Bạn cần bấm 'Mở camera' trước.";
+            statusText.className = "camera-status warning-text";
+            return;
+        }
+
+        if (detectTimer) {
+            return;
+        }
+
+        statusText.innerText = "Đang nhận diện...";
+        statusText.className = "camera-status safe-text";
+
+        detectTimer = setInterval(sendFrameToServer, 1500);
+
+        sendFrameToServer();
+    }
+
+    function stopDetection() {
+        const statusText = document.getElementById("camera-status");
+
+        if (detectTimer) {
+            clearInterval(detectTimer);
+            detectTimer = null;
+        }
+
+        statusText.innerText = "Đã dừng nhận diện.";
+        statusText.className = "camera-status neutral-text";
+    }
+
+    function stopCamera() {
+        stopDetection();
+
+        const video = document.getElementById("webcam");
+        const resultFrame = document.getElementById("result-frame");
+        const statusText = document.getElementById("camera-status");
+        const violationBox = document.getElementById("violation-box");
+
+        if (webcamStream) {
+            webcamStream.getTracks().forEach(track => track.stop());
+            webcamStream = null;
+        }
+
+        video.srcObject = null;
+        resultFrame.removeAttribute("src");
+
+        statusText.innerText = "Camera đã tắt.";
+        statusText.className = "camera-status neutral-text";
+
+        violationBox.innerHTML = `
+            <div class="empty-realtime-box">
+                Chưa có dữ liệu nhận diện.
+            </div>
+        `;
+    }
+
+    window.addEventListener("pagehide", stopCamera);
+    window.addEventListener("beforeunload", stopCamera);
+</script>
+
+{% endblock %}
