@@ -845,233 +845,191 @@ def detect_overload_people(frame, annotated_frame, head_boxes):
 # NHẬN DIỆN BIỂN SỐ
 # =========================
 
+# Danh sách seri dùng để hỗ trợ sửa lỗi OCR theo cấu trúc biển số.
+# Không ép cứng một biển cụ thể. Chỉ suy luận khi có đủ căn cứ.
+VALID_SERIES_BY_PROVINCE = {
+    "20": ["B1", "C1", "D1", "E1", "F1", "G1", "H1"],
+    "29": ["B1", "C1", "D1", "E1", "E2", "F1", "G1", "H1", "K1", "L1", "L5", "M1", "N1", "P1", "S1", "S6", "T1", "V1"],
+    "30": ["B1", "C1", "D1", "E1", "E2", "F1", "G1", "H1", "K1", "L1", "L5", "M1", "N1", "P1", "S1", "S6", "T1", "V1"],
+    "31": ["B1", "C1", "D1", "E1", "E2", "F1", "G1", "H1", "K1", "L1", "L5", "M1", "N1", "P1", "S1", "S6", "T1", "V1"],
+    "32": ["B1", "C1", "D1", "E1", "E2", "F1", "G1", "H1", "K1", "L1", "L5", "M1", "N1", "P1", "S1", "S6", "T1", "V1"],
+    "33": ["B1", "C1", "D1", "E1", "E2", "F1", "G1", "H1", "K1", "L1", "L5", "M1", "N1", "P1", "S1", "S6", "T1", "V1"],
+    "40": ["B1", "C1", "D1", "E1", "E2", "F1", "G1", "H1", "K1", "L1", "L5", "M1", "N1", "P1", "S1", "S6", "T1", "V1"],
+    "97": ["B1", "C1", "D1", "E1", "F1", "G1", "H1", "K1", "AB", "AC", "AD", "AE", "AG", "AH", "AK", "AL"],
+    "98": ["B1", "B2", "B3", "C1", "D1", "E1", "F1", "G1", "H1", "K1", "L1", "M1"],
+}
+
+
 def normalize_plate_text(text):
-    """
-    Chuẩn hóa text OCR:
-    - Viết hoa
-    - Bỏ khoảng trắng, dấu gạch, dấu chấm
-    - Chỉ giữ chữ A-Z và số 0-9
-    """
-    text = str(text).upper()
-    text = text.replace(" ", "")
-    text = text.replace("-", "")
-    text = text.replace(".", "")
-    text = text.replace("_", "")
-    text = text.replace(":", "")
-    text = text.replace(";", "")
-    text = re.sub(r"[^A-Z0-9]", "", text)
-    return text
+    if text is None:
+        return ""
+    return re.sub(r"[^A-Z0-9]", "", str(text).upper())
 
 
 def sort_ocr_items_by_x(ocr_results, only_digits=False):
-    """
-    Sắp xếp kết quả OCR theo trục X từ trái sang phải.
-    Dùng cho từng dòng biển số.
-    """
     items = []
-
     for bbox, text, score in ocr_results:
         clean = normalize_plate_text(text)
-
         if only_digits:
             clean = re.sub(r"[^0-9]", "", clean)
-
         if not clean:
             continue
-
         xs = [p[0] for p in bbox]
-        x_center = sum(xs) / len(xs)
+        items.append({"text": clean, "score": float(score), "x": sum(xs) / len(xs)})
+    return sorted(items, key=lambda item: item["x"])
 
-        items.append({
-            "text": clean,
-            "score": float(score),
-            "x": x_center
-        })
 
-    items = sorted(items, key=lambda item: item["x"])
-    return items
+def _to_digit_char(ch):
+    return {
+        "O": "0", "D": "0", "Q": "0",
+        "I": "1", "L": "1", "T": "1",
+        "Z": "2", "S": "5", "G": "6", "B": "8"
+    }.get(ch, ch)
+
+
+def _to_letter_char(ch):
+    return {"0": "D", "8": "B", "6": "G", "1": "L", "5": "S"}.get(ch, ch)
+
+
+def _series_distance(observed, candidate):
+    confusion = {
+        frozenset(("0", "O")), frozenset(("0", "D")),
+        frozenset(("1", "I")), frozenset(("1", "L")), frozenset(("1", "T")),
+        frozenset(("8", "B")), frozenset(("6", "G")),
+        frozenset(("5", "S")), frozenset(("2", "Z")),
+    }
+    score = 0.0
+    for i in range(max(len(observed), len(candidate))):
+        a = observed[i] if i < len(observed) else ""
+        b = candidate[i] if i < len(candidate) else ""
+        if a == b:
+            continue
+        if a and b and frozenset((a, b)) in confusion:
+            score += 0.25
+        else:
+            score += 1.0
+    return score
+
+
+def infer_series(province, raw_series):
+    raw_series = normalize_plate_text(raw_series)[:2]
+    if not raw_series:
+        return None
+
+    first = _to_letter_char(raw_series[0])
+    second = raw_series[1] if len(raw_series) > 1 else ""
+    if second in {"I", "L", "T"}:
+        second = "1"
+    elif second == "O":
+        second = "0"
+    observed = first + second
+
+    valid = VALID_SERIES_BY_PROVINCE.get(province)
+    if not valid:
+        if len(observed) == 2 and observed[0].isalpha() and observed[1].isalnum():
+            return observed
+        return None
+
+    if observed in valid:
+        return observed
+
+    # Nếu chỉ đọc được chữ đầu và tỉnh chỉ có một seri bắt đầu bằng chữ đó,
+    # có thể suy luận ký tự thứ hai.
+    same_first = [s for s in valid if s[0] == first]
+    if len(observed) == 1:
+        return same_first[0] if len(same_first) == 1 else None
+
+    scored = sorted((_series_distance(observed, s), s) for s in valid)
+    if scored:
+        best_score, best = scored[0]
+        second_score = scored[1][0] if len(scored) > 1 else 999.0
+        if best_score <= 0.5 and best_score < second_score:
+            return best
+
+    if len(same_first) == 1:
+        return same_first[0]
+
+    return None
+
 
 def fix_top_plate_text(top_text):
-    """
-    Sửa dòng trên biển số xe máy Việt Nam.
-    Ví dụ:
-    20B1, 20FR, 20PR, 20E8 -> 20-B1
-    29L1, 2911, 29I1 -> 29-L1
-    """
-    top_text = normalize_plate_text(top_text)
-
-    if not top_text:
+    """Trả về tuple (province, series), ví dụ ('20', 'C1')."""
+    text = normalize_plate_text(top_text)
+    if len(text) < 3:
         return None
 
-    # Sửa lỗi ở 2 số đầu
-    chars = list(top_text)
-
+    chars = list(text)
     for i in range(min(2, len(chars))):
-        if chars[i] == "O":
-            chars[i] = "0"
-        elif chars[i] == "I":
-            chars[i] = "1"
-        elif chars[i] == "L":
-            chars[i] = "1"
-        elif chars[i] == "S":
-            chars[i] = "5"
-        elif chars[i] == "B":
-            chars[i] = "8"
+        chars[i] = _to_digit_char(chars[i])
+    fixed = "".join(chars)
 
-    top_text = "".join(chars)
-
-    # Tìm mã tỉnh 2 số
-    province_match = re.search(r"\d{2}", top_text)
-
-    if not province_match:
+    match = re.match(r"(\d{2})([A-Z0-9]{1,3})", fixed)
+    if not match:
         return None
 
-    province = province_match.group(0)
-    remain = top_text[province_match.end():]
-
-    # =========================
-    # RULE CỨNG CHO BIỂN DEMO
-    # =========================
-    # Nếu biển bạn đang demo là 20-B1 thì ép tất cả lỗi dòng trên của tỉnh 20 về B1
-    if province == "20":
-        return province, "B", "1"
-
-    # Nếu biển demo thứ hai là 29-L1 thì ép về L1
-    if province == "29":
-        return province, "L", "1"
-
-    # =========================
-    # RULE CHUNG CHO BIỂN KHÁC
-    # =========================
-    if len(remain) < 1:
+    province = match.group(1)
+    raw_series = match.group(2)[:2]
+    series = infer_series(province, raw_series)
+    if not series:
         return None
-
-    m = re.search(r"([A-Z0-9])([A-Z0-9]?)", remain)
-
-    if not m:
-        return None
-
-    letter = m.group(1)
-    series = m.group(2) if m.group(2) else "1"
-
-    # Sửa ký tự chữ seri
-    letter_map = {
-        "8": "B",
-        "0": "D",
-        "1": "L",
-        "I": "L"
-    }
-
-    # Sửa ký tự số seri
-    series_map = {
-        "I": "1",
-        "L": "1",
-        "O": "0",
-        "S": "5",
-        "B": "8",
-        "E": "8"
-    }
-
-    letter = letter_map.get(letter, letter)
-    series = series_map.get(series, series)
-
-    return province, letter, series
+    return province, series
 
 
 def format_bottom_plate_text(bottom_text):
-    """
-    Format dòng dưới biển số.
-    Ví dụ:
-    76621 -> 766.21
-    94839 -> 948.39
-    """
-    bottom_text = normalize_plate_text(bottom_text)
-    bottom_text = re.sub(r"[^0-9]", "", bottom_text)
-
-    if not bottom_text:
+    text = normalize_plate_text(bottom_text)
+    if not text:
         return None
 
-    # Nếu OCR đọc dư, lấy 5 số có khả năng là biển số nhất
-    if len(bottom_text) > 5:
-        # Ưu tiên lấy 5 số cuối vì OCR hay đọc thêm nhiễu phía trước
-        bottom_text = bottom_text[-5:]
-
-    if len(bottom_text) == 5:
-        return f"{bottom_text[:3]}.{bottom_text[3:]}", bottom_text
-
-    if len(bottom_text) == 4:
-        return bottom_text, bottom_text
-
-    return bottom_text, bottom_text
+    digits = "".join(_to_digit_char(ch) for ch in text)
+    digits = re.sub(r"[^0-9]", "", digits)
+    if len(digits) > 5:
+        digits = digits[-5:]
+    if len(digits) == 5:
+        return f"{digits[:3]}.{digits[3:]}", digits
+    if len(digits) == 4:
+        return digits, digits
+    return None
 
 
 def format_vietnam_plate_from_parts(top_text, bottom_text):
-    """
-    Ghép dòng trên và dòng dưới thành biển số hoàn chỉnh.
-    """
     top_fixed = fix_top_plate_text(top_text)
     bottom_fixed = format_bottom_plate_text(bottom_text)
-
     if not top_fixed or not bottom_fixed:
         return None
-
-    province, letter, series = top_fixed
-    bottom_display, bottom_raw = bottom_fixed
-
-    return f"{province}-{letter}{series} {bottom_display}"
+    province, series = top_fixed
+    bottom_display, _ = bottom_fixed
+    return f"{province}-{series} {bottom_display}"
 
 
-def preprocess_plate_crop(plate_crop):
-    """
-    Tiền xử lý crop biển số:
-    - Phóng to
-    - Chuyển grayscale
-    - Tăng tương phản
-    - Làm nét nhẹ
-    - Cắt bớt viền để OCR không đọc nhầm khung biển
-    """
+def preprocess_plate_variants(plate_crop):
     if plate_crop is None or plate_crop.size == 0:
-        return None
+        return []
 
-    crop_big = cv2.resize(
-        plate_crop,
-        None,
-        fx=6,
-        fy=6,
-        interpolation=cv2.INTER_CUBIC
-    )
-
+    crop_big = cv2.resize(plate_crop, None, fx=5, fy=5, interpolation=cv2.INTER_CUBIC)
     gray = cv2.cvtColor(crop_big, cv2.COLOR_BGR2GRAY)
-
-    clahe = cv2.createCLAHE(
-        clipLimit=2.0,
-        tileGridSize=(8, 8)
+    clahe = cv2.createCLAHE(clipLimit=2.2, tileGridSize=(8, 8))
+    contrast = clahe.apply(gray)
+    blur = cv2.GaussianBlur(contrast, (0, 0), 1.0)
+    sharp = cv2.addWeighted(contrast, 1.7, blur, -0.7, 0)
+    _, otsu = cv2.threshold(sharp, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    adaptive = cv2.adaptiveThreshold(
+        sharp, 255, cv2.ADAPTIVE_THRESH_GAUSSIAN_C,
+        cv2.THRESH_BINARY, 31, 9
     )
-    gray = clahe.apply(gray)
 
-    blur = cv2.GaussianBlur(gray, (0, 0), 1.0)
-    sharp = cv2.addWeighted(gray, 1.6, blur, -0.6, 0)
-
-    h, w = sharp.shape[:2]
-
-    margin_x = int(w * 0.08)
-    margin_y = int(h * 0.08)
-
-    inner = sharp[
-        margin_y:h - margin_y,
-        margin_x:w - margin_x
-    ]
-
-    if inner is None or inner.size == 0:
-        inner = sharp
-
-    return inner
+    variants = [contrast, sharp, otsu, adaptive]
+    cleaned = []
+    for img in variants:
+        h, w = img.shape[:2]
+        mx, my = int(w * 0.03), int(h * 0.03)
+        inner = img[my:h-my, mx:w-mx] if h > 2 * my and w > 2 * mx else img
+        cleaned.append(inner if inner.size else img)
+    return cleaned
 
 
 def ocr_single_line(img, allowlist, only_digits=False):
-    """
-    OCR một dòng ảnh, sau đó nối kết quả theo thứ tự trái sang phải.
-    """
+    if img is None or img.size == 0:
+        return "", 0.0, []
     try:
         results = ocr_reader.readtext(
             img,
@@ -1088,103 +1046,74 @@ def ocr_single_line(img, allowlist, only_digits=False):
         print("Lỗi OCR dòng biển số:", e)
         results = []
 
-    items = sort_ocr_items_by_x(
-        results,
-        only_digits=only_digits
-    )
-
-    text = "".join([item["text"] for item in items])
+    items = sort_ocr_items_by_x(results, only_digits=only_digits)
+    text = "".join(item["text"] for item in items)
     scores = [item["score"] for item in items]
-
-    avg_score = sum(scores) / len(scores) if scores else 0.0
-
-    return text, avg_score, results
+    return text, (sum(scores) / len(scores) if scores else 0.0), results
 
 
 def read_plate_with_easyocr(plate_crop):
-    """
-    OCR biển số xe máy Việt Nam 2 dòng.
-
-    Cách xử lý:
-    - Không OCR toàn biển một lần làm chính.
-    - Tách dòng trên và dòng dưới.
-    - Dòng trên cho phép chữ + số.
-    - Dòng dưới chỉ cho phép số.
-    """
-    processed = preprocess_plate_crop(plate_crop)
-
-    if processed is None:
+    variants = preprocess_plate_variants(plate_crop)
+    if not variants:
         return None, 0.0
 
-    h, w = processed.shape[:2]
+    candidates = []
+    for processed in variants:
+        h, _ = processed.shape[:2]
+        top_line = processed[0:int(h * 0.54), :]
+        bottom_line = processed[int(h * 0.40):h, :]
 
-    # Tách 2 dòng biển số xe máy
-    top_line = processed[0:int(h * 0.48), :]
-    bottom_line = processed[int(h * 0.42):h, :]
-
-    # OCR dòng trên: ví dụ 20B1, 29L1
-    top_text, top_score, top_raw = ocr_single_line(
-        top_line,
-        allowlist="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        only_digits=False
-    )
-
-    # OCR dòng dưới: ví dụ 76621, 94839
-    bottom_text, bottom_score, bottom_raw = ocr_single_line(
-        bottom_line,
-        allowlist="0123456789",
-        only_digits=True
-    )
-
-    print("OCR dòng trên raw:", top_raw)
-    print("OCR dòng dưới raw:", bottom_raw)
-    print("TOP TEXT:", top_text)
-    print("BOTTOM TEXT:", bottom_text)
-
-    plate_text = format_vietnam_plate_from_parts(
-        top_text,
-        bottom_text
-    )
-
-    if plate_text:
-        avg_score = (top_score + bottom_score) / 2
-        return plate_text, avg_score
-
-    # Fallback: nếu tách dòng thất bại thì OCR toàn biển
-    full_text, full_score, full_raw = ocr_single_line(
-        processed,
-        allowlist="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
-        only_digits=False
-    )
-
-    print("OCR toàn biển raw:", full_raw)
-    print("FULL TEXT:", full_text)
-
-    # Thử tách theo cấu trúc: 2 số + chữ + số + 4/5 số
-    full_text = normalize_plate_text(full_text)
-
-    match = re.search(r"(\d{2}[A-Z][0-9IOLSB])([0-9]{4,5})", full_text)
-
-    if match:
-        top_part = match.group(1)
-        bottom_part = match.group(2)
-
-        plate_text = format_vietnam_plate_from_parts(
-            top_part,
-            bottom_part
+        top_text, top_score, top_raw = ocr_single_line(
+            top_line,
+            allowlist="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            only_digits=False
+        )
+        bottom_text, bottom_score, bottom_raw = ocr_single_line(
+            bottom_line,
+            allowlist="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            only_digits=False
         )
 
+        print("OCR dòng trên raw:", top_raw)
+        print("OCR dòng dưới raw:", bottom_raw)
+        print("TOP TEXT:", top_text)
+        print("BOTTOM TEXT:", bottom_text)
+
+        plate_text = format_vietnam_plate_from_parts(top_text, bottom_text)
         if plate_text:
-            return plate_text, full_score
+            score = top_score * 0.45 + bottom_score * 0.55
+            if re.fullmatch(r"\d{2}-[A-Z][A-Z0-9]\s\d{3}\.\d{2}", plate_text):
+                score += 0.10
+            candidates.append((score, plate_text))
+
+    if candidates:
+        candidates.sort(key=lambda item: item[0], reverse=True)
+        score, text = candidates[0]
+        return text, max(0.0, min(score, 1.0))
+
+    # Fallback OCR toàn biển.
+    for processed in variants:
+        full_text, full_score, full_raw = ocr_single_line(
+            processed,
+            allowlist="0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ",
+            only_digits=False
+        )
+        print("OCR toàn biển raw:", full_raw)
+        print("FULL TEXT:", full_text)
+        full_text = normalize_plate_text(full_text)
+
+        for top_len in (4, 3):
+            if len(full_text) > top_len:
+                plate_text = format_vietnam_plate_from_parts(
+                    full_text[:top_len], full_text[top_len:]
+                )
+                if plate_text:
+                    return plate_text, full_score
 
     return None, 0.0
 
 
 def detect_license_plate(frame, annotated_frame):
-    """
-    Phát hiện biển số bằng YOLO, crop biển số và đọc OCR.
-    Bản này tối ưu cho biển số xe máy Việt Nam 2 dòng.
-    """
     plate_number = None
     best_score = 0.0
 
@@ -1208,64 +1137,40 @@ def detect_license_plate(frame, annotated_frame):
     for result in results:
         if result.boxes is None:
             continue
-
         total_boxes += len(result.boxes)
 
         for box in result.boxes:
             plate_conf = float(box.conf[0])
-
-            x1, y1, x2, y2 = box.xyxy[0].cpu().numpy()
-            x1, y1, x2, y2 = int(x1), int(y1), int(x2), int(y2)
-
-            box_w = x2 - x1
-            box_h = y2 - y1
-
+            x1, y1, x2, y2 = [int(v) for v in box.xyxy[0].cpu().numpy()]
+            box_w, box_h = x2 - x1, y2 - y1
             if box_w <= 0 or box_h <= 0:
                 continue
-
-            # Bỏ box quá nhỏ
             if box_w < w * 0.03 or box_h < h * 0.015:
                 continue
 
-            # Pad nhỏ để tránh crop quá rộng gây nhiễu OCR
-            pad_x = int(box_w * 0.03)
-            pad_y = int(box_h * 0.05)
-
-            x1p = max(0, x1 - pad_x)
-            y1p = max(0, y1 - pad_y)
-            x2p = min(w, x2 + pad_x)
-            y2p = min(h, y2 + pad_y)
-
+            pad_x = int(box_w * 0.04)
+            pad_y = int(box_h * 0.06)
+            x1p, y1p = max(0, x1 - pad_x), max(0, y1 - pad_y)
+            x2p, y2p = min(w, x2 + pad_x), min(h, y2 + pad_y)
             plate_crop = frame[y1p:y2p, x1p:x2p]
-
             if plate_crop is None or plate_crop.size == 0:
                 continue
 
             current_text, ocr_score = read_plate_with_easyocr(plate_crop)
-
             if current_text:
-                final_score = (plate_conf * 0.45) + (ocr_score * 0.55)
-
-                if final_score >= best_score:
+                final_score = plate_conf * 0.40 + ocr_score * 0.60
+                if final_score > best_score:
                     best_score = final_score
                     plate_number = current_text
-
                 label = current_text
             else:
                 label = "PLATE"
 
-            cv2.rectangle(
-                annotated_frame,
-                (x1p, y1p),
-                (x2p, y2p),
-                (255, 0, 0),
-                2
-            )
-
+            cv2.rectangle(annotated_frame, (x1p, y1p), (x2p, y2p), (255, 0, 0), 2)
             cv2.putText(
                 annotated_frame,
                 label,
-                (x1p, max(0, y1p - 10)),
+                (x1p, max(25, y1p - 10)),
                 cv2.FONT_HERSHEY_SIMPLEX,
                 0.7,
                 (255, 0, 0),
@@ -1274,8 +1179,8 @@ def detect_license_plate(frame, annotated_frame):
 
     print("Số box biển số YOLO detect được:", total_boxes)
     print("Biển số đọc được:", plate_number)
-
     return plate_number, annotated_frame
+
 # =========================
 # CHẠY TỔNG HỢP 3 BÀI TOÁN
 # =========================
